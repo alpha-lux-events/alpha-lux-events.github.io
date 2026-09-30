@@ -1,0 +1,29 @@
+name: Financial Events Scraper
+
+on:
+  schedule:
+    - cron: '0 6 * * *' # S'exécute chaque jour à 6h00 du matin
+  workflow_dispatch: # Permet de lancer le script manuellement depuis l'interface GitHub
+
+jobs:
+  run-scraper:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+            python-version: '3.10'
+
+      - name: Install dependencies
+        run: |
+          pip install requests beautifulsoup4
+
+      - name: Run scraper script
+        env:
+          JSONBIN_BIN_ID: ${{ secrets.JSONBIN_BIN_ID }}
+          JSONBIN_API_KEY: ${{ secrets.JSONBIN_API_KEY }}
+        run: |
+          python scripts/scraper.py
