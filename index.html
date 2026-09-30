@@ -177,21 +177,22 @@
     </div>
 
     <script>
+        // Configuration JSONBin.io
+        const BIN_ID = '6abd019fac6210605a055654';
+        const API_KEY = '$2a$10$hC94ou56AOI0630qyMQOTOIz6uxVxfhX0h2bMC6PN6Npuzhzr1dZu';
+
         let events = [];
         let editingId = null;
         
-        // Date de référence: 30 septembre 2026 (aujourd'hui)
+        // Date de référence
         const today = new Date(2026, 8, 30);
         today.setHours(0, 0, 0, 0);
 
-        // Interprète YYYY-MM-DD en heure locale (et non en UTC).
         function parseLocalDate(dateString) {
             const [year, month, day] = dateString.split('-').map(Number);
             return new Date(year, month - 1, day);
         }
-        console.log('Date référence (aujourd\'hui):', today.toISOString().split('T')[0]);
 
-        // Icônes liées au TYPE d'événement (et non à l'organisateur)
         const eventTypeIcons = {
             'conference': '🎤',
             'cocktail': '🥂',
@@ -214,76 +215,87 @@
             'ALJB (ABBL Partner)': 'A'
         };
 
-        // Événements intégrés à l'application.
-        // Ils sont fusionnés avec localStorage pour qu'une ancienne version
-        // du calendrier ne fasse pas disparaître les nouveaux événements.
         const defaultEvents = [
-                    // 2026 - ABBL Events (à partir du 30 sept 2026)
-                    { id: 107, title: "ABBL Depositary Banking Cluster Annual Meeting 2026", type: "conference", date: "2026-10-29", time: "09:00", location: "TBD - Luxembourg", organizer: "ABBL", attendees: [] },
-                    { id: 109, title: "PSD3 & PSR: Key Regulatory Changes", type: "seminar", date: "2026-10-02", time: "09:00", location: "TBD - Luxembourg", organizer: "ABBL", attendees: [] },
-                    { id: 108, title: "ABBL Private Banking Cluster Annual Event 2026", type: "conference", date: "2026-11-26", time: "09:00", location: "TBD - Luxembourg", organizer: "ABBL", attendees: [] },
-                    
-                    // 2027 - Events
-                    { id: 1, title: "Paperjam Together - SME Breakfast #1", type: "workshop", date: "2027-01-29", time: "08:00", location: "Spuerkeess, 2-4 Place de Metz", organizer: "Paperjam Club", attendees: [] },
-                    { id: 2, title: "Paperjam - Winter Cocktail", type: "cocktail", date: "2027-02-07", time: "17:00", location: "TBD - Luxembourg", organizer: "Paperjam Club", attendees: [] },
-                    { id: 3, title: "Paperjam 10x6 - The Future of Wealth", type: "forum", date: "2027-02-23", time: "09:00", location: "Kinepolis Kirchberg, 45 Av. JFK", organizer: "Paperjam", attendees: [] },
-                    { id: 4, title: "Hubfinance - Family Offices Summit", type: "forum", date: "2027-03-16", time: "08:15", location: "ECCL, 4 Place de l'Europe", organizer: "Hubfinance", attendees: [] },
-                    { id: 5, title: "ALFI - Global Asset Management Conference", type: "conference", date: "2027-03-23", time: "09:00", location: "ECCL, 7 Rue Alcide de Gasperi", organizer: "ALFI", attendees: [] },
-                    { id: 6, title: "Paperjam 10x6 - Governance & Transformation", type: "workshop", date: "2027-03-23", time: "09:00", location: "Kinepolis Kirchberg", organizer: "Paperjam", attendees: [] },
-                    { id: 7, title: "Paperjam Club - Tech Sovereignty Roundtable", type: "forum", date: "2027-04-28", time: "14:00", location: "TBD - Luxembourg", organizer: "Paperjam Club", attendees: [] },
-                    { id: 8, title: "Paperjam 10x6 - Funds Competition & Growth", type: "workshop", date: "2027-04-27", time: "09:00", location: "Kinepolis Kirchberg", organizer: "Paperjam", attendees: [] },
-                    { id: 9, title: "Paperjam - Oxford-style Debate: Private Credit", type: "forum", date: "2027-05-04", time: "17:00", location: "TBD - Luxembourg", organizer: "Paperjam", attendees: [] },
-                    { id: 10, title: "ALFI - European Risk Management Conference", type: "conference", date: "2027-05-19", time: "07:30", location: "Luxexpo The Box, Kirchberg", organizer: "ALFI", attendees: [] },
-                    { id: 11, title: "Paperjam - Tokenise My Finances", type: "forum", date: "2027-05-20", time: "17:00", location: "TBD - Luxembourg", organizer: "Paperjam", attendees: [] },
-                    { id: 12, title: "ALFI - Digital Fund Management Seminar", type: "seminar", date: "2027-06-08", time: "09:00", location: "ECCL, Kirchberg", organizer: "ALFI", attendees: [] },
-                    { id: 13, title: "Paperjam 10x6 - Private Markets Mainstream", type: "workshop", date: "2027-06-16", time: "09:00", location: "Kinepolis Kirchberg", organizer: "Paperjam", attendees: [] },
-                    { id: 14, title: "Temenos - Meet the Marketplace", type: "forum", date: "2027-06-04", time: "16:00", location: "House of Financial Tech", organizer: "Temenos", attendees: [] },
-                    { id: 15, title: "Paperjam - Summer Cocktail", type: "cocktail", date: "2027-07-01", time: "17:00", location: "TBD - Luxembourg", organizer: "Paperjam", attendees: [] },
-                    { id: 16, title: "Expat City Rally", type: "forum", date: "2027-07-09", time: "17:30", location: "Luxembourg City", organizer: "Paperjam Club", attendees: [] },
-                    { id: 17, title: "Paperjam - Focus IA: GenAI Opportunities", type: "forum", date: "2027-09-16", time: "17:00", location: "TBD - Luxembourg", organizer: "Paperjam", attendees: [] },
-                    { id: 18, title: "Paperjam - Autumn Cocktail", type: "cocktail", date: "2027-09-21", time: "17:00", location: "TBD - Luxembourg", organizer: "Paperjam", attendees: [] },
-                    { id: 19, title: "Charles River - Asset Mgmt Solutions Forum", type: "workshop", date: "2027-09-15", time: "14:00", location: "ECCL, Kirchberg", organizer: "Charles River", attendees: [] },
-                    { id: 20, title: "BlackRock - Investment Solutions Seminar", type: "seminar", date: "2027-10-05", time: "10:00", location: "ECCL, Kirchberg", organizer: "BlackRock", attendees: [] },
-                    { id: 21, title: "LPEA Insights Conference 2027", type: "conference", date: "2027-10-15", time: "09:00", location: "Luxexpo The Box, Kirchberg", organizer: "LPEA", attendees: [] },
-                    { id: 22, title: "Temenos Community Forum (TCF) 2027", type: "conference", date: "2027-05-05", time: "09:00", location: "ECCL, Kirchberg", organizer: "Temenos", attendees: [] },
-                    { id: 23, title: "ALFI - AML/CFT Compliance Seminar", type: "seminar", date: "2027-11-23", time: "09:00", location: "ECCL, Kirchberg", organizer: "ALFI", attendees: [] },
-                    { id: 24, title: "Paperjam x LFF - Finance Awards Gala", type: "cocktail", date: "2027-11-16", time: "19:00", location: "TBD - Luxembourg", organizer: "Paperjam Club", attendees: [] },
-                    { id: 25, title: "ALFI - Private Assets Conference Day 1", type: "conference", date: "2027-12-07", time: "09:00", location: "ECCL, Kirchberg", organizer: "ALFI", attendees: [] },
-                    { id: 26, title: "ALFI - Private Assets Conference Day 2", type: "conference", date: "2027-12-08", time: "09:00", location: "ECCL, Kirchberg", organizer: "ALFI", attendees: [] }
-                ];
+            { id: 107, title: "ABBL Depositary Banking Cluster Annual Meeting 2026", type: "conference", date: "2026-10-29", time: "09:00", location: "TBD - Luxembourg", organizer: "ABBL", attendees: [] },
+            { id: 109, title: "PSD3 & PSR: Key Regulatory Changes", type: "seminar", date: "2026-10-02", time: "09:00", location: "TBD - Luxembourg", organizer: "ABBL", attendees: [] },
+            { id: 108, title: "ABBL Private Banking Cluster Annual Event 2026", type: "conference", date: "2026-11-26", time: "09:00", location: "TBD - Luxembourg", organizer: "ABBL", attendees: [] },
+            { id: 1, title: "Paperjam Together - SME Breakfast #1", type: "workshop", date: "2027-01-29", time: "08:00", location: "Spuerkeess, 2-4 Place de Metz", organizer: "Paperjam Club", attendees: [] },
+            { id: 2, title: "Paperjam - Winter Cocktail", type: "cocktail", date: "2027-02-07", time: "17:00", location: "TBD - Luxembourg", organizer: "Paperjam Club", attendees: [] },
+            { id: 3, title: "Paperjam 10x6 - The Future of Wealth", type: "forum", date: "2027-02-23", time: "09:00", location: "Kinepolis Kirchberg, 45 Av. JFK", organizer: "Paperjam", attendees: [] },
+            { id: 4, title: "Hubfinance - Family Offices Summit", type: "forum", date: "2027-03-16", time: "08:15", location: "ECCL, 4 Place de l'Europe", organizer: "Hubfinance", attendees: [] },
+            { id: 5, title: "ALFI - Global Asset Management Conference", type: "conference", date: "2027-03-23", time: "09:00", location: "ECCL, 7 Rue Alcide de Gasperi", organizer: "ALFI", attendees: [] },
+            { id: 6, title: "Paperjam 10x6 - Governance & Transformation", type: "workshop", date: "2027-03-23", time: "09:00", location: "Kinepolis Kirchberg", organizer: "Paperjam", attendees: [] },
+            { id: 7, title: "Paperjam Club - Tech Sovereignty Roundtable", type: "forum", date: "2027-04-28", time: "14:00", location: "TBD - Luxembourg", organizer: "Paperjam Club", attendees: [] },
+            { id: 8, title: "Paperjam 10x6 - Funds Competition & Growth", type: "workshop", date: "2027-04-27", time: "09:00", location: "Kinepolis Kirchberg", organizer: "Paperjam", attendees: [] },
+            { id: 9, title: "Paperjam - Oxford-style Debate: Private Credit", type: "forum", date: "2027-05-04", time: "17:00", location: "TBD - Luxembourg", organizer: "Paperjam", attendees: [] },
+            { id: 10, title: "ALFI - European Risk Management Conference", type: "conference", date: "2027-05-19", time: "07:30", location: "Luxexpo The Box, Kirchberg", organizer: "ALFI", attendees: [] },
+            { id: 11, title: "Paperjam - Tokenise My Finances", type: "forum", date: "2027-05-20", time: "17:00", location: "TBD - Luxembourg", organizer: "Paperjam", attendees: [] },
+            { id: 12, title: "ALFI - Digital Fund Management Seminar", type: "seminar", date: "2027-06-08", time: "09:00", location: "ECCL, Kirchberg", organizer: "ALFI", attendees: [] },
+            { id: 13, title: "Paperjam 10x6 - Private Markets Mainstream", type: "workshop", date: "2027-06-16", time: "09:00", location: "Kinepolis Kirchberg", organizer: "Paperjam", attendees: [] },
+            { id: 14, title: "Temenos - Meet the Marketplace", type: "forum", date: "2027-06-04", time: "16:00", location: "House of Financial Tech", organizer: "Temenos", attendees: [] },
+            { id: 15, title: "Paperjam - Summer Cocktail", type: "cocktail", date: "2027-07-01", time: "17:00", location: "TBD - Luxembourg", organizer: "Paperjam Club", attendees: [] },
+            { id: 16, title: "Expat City Rally", type: "forum", date: "2027-07-09", time: "17:30", location: "Luxembourg City", organizer: "Paperjam Club", attendees: [] },
+            { id: 17, title: "Paperjam - Focus IA: GenAI Opportunities", type: "forum", date: "2027-09-16", time: "17:00", location: "TBD - Luxembourg", organizer: "Paperjam", attendees: [] },
+            { id: 18, title: "Paperjam - Autumn Cocktail", type: "cocktail", date: "2027-09-21", time: "17:00", location: "TBD - Luxembourg", organizer: "Paperjam", attendees: [] },
+            { id: 19, title: "Charles River - Asset Mgmt Solutions Forum", type: "workshop", date: "2027-09-15", time: "14:00", location: "ECCL, Kirchberg", organizer: "Charles River", attendees: [] },
+            { id: 20, title: "BlackRock - Investment Solutions Seminar", type: "seminar", date: "2027-10-05", time: "10:00", location: "ECCL, Kirchberg", organizer: "BlackRock", attendees: [] },
+            { id: 21, title: "LPEA Insights Conference 2027", type: "conference", date: "2027-10-15", time: "09:00", location: "Luxexpo The Box, Kirchberg", organizer: "LPEA", attendees: [] },
+            { id: 22, title: "Temenos Community Forum (TCF) 2027", type: "conference", date: "2027-05-05", time: "09:00", location: "ECCL, Kirchberg", organizer: "Temenos", attendees: [] },
+            { id: 23, title: "ALFI - AML/CFT Compliance Seminar", type: "seminar", date: "2027-11-23", time: "09:00", location: "ECCL, Kirchberg", organizer: "ALFI", attendees: [] },
+            { id: 24, title: "Paperjam x LFF - Finance Awards Gala", type: "cocktail", date: "2027-11-16", time: "19:00", location: "TBD - Luxembourg", organizer: "Paperjam Club", attendees: [] },
+            { id: 25, title: "ALFI - Private Assets Conference Day 1", type: "conference", date: "2027-12-07", time: "09:00", location: "ECCL, Kirchberg", organizer: "ALFI", attendees: [] },
+            { id: 26, title: "ALFI - Private Assets Conference Day 2", type: "conference", date: "2027-12-08", time: "09:00", location: "ECCL, Kirchberg", organizer: "ALFI", attendees: [] }
+        ];
 
-        function loadEvents() {
-            const saved = localStorage.getItem('events');
+        async function loadEvents() {
+            try {
+                const response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+                    headers: {
+                        'X-Master-Key': API_KEY
+                    }
+                });
+                
+                if (!response.ok) throw new Error('Erreur de chargement distant');
+                
+                const result = await response.json();
+                let remoteEvents = result.record;
 
-            if (saved) {
-                try {
-                    const savedEvents = JSON.parse(saved);
-                    const savedIds = new Set(savedEvents.map(e => e.id));
-
-                    // Conserve les données déjà enregistrées et ajoute uniquement
-                    // les événements par défaut absents de localStorage.
-                    const missingDefaults = defaultEvents.filter(e => !savedIds.has(e.id));
-                    events = [...savedEvents, ...missingDefaults];
-
-                    localStorage.setItem('events', JSON.stringify(events));
-                } catch (error) {
-                    console.error('Erreur de lecture de localStorage :', error);
+                if (!remoteEvents || remoteEvents.length === 0) {
                     events = [...defaultEvents];
-                    localStorage.setItem('events', JSON.stringify(events));
+                    saveToCloud();
+                } else {
+                    const savedIds = new Set(remoteEvents.map(e => e.id));
+                    const missingDefaults = defaultEvents.filter(e => !savedIds.has(e.id));
+                    events = [...remoteEvents, ...missingDefaults];
                 }
-            } else {
-                events = [...defaultEvents];
-                localStorage.setItem('events', JSON.stringify(events));
+            } catch (error) {
+                console.error('Erreur réseau, utilisation du mode hors-ligne :', error);
+                const saved = localStorage.getItem('events');
+                events = saved ? JSON.parse(saved) : [...defaultEvents];
             }
 
             filterAndRender();
+        }
+
+        async function saveToCloud() {
+            try {
+                await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': API_KEY
+                    },
+                    body: JSON.stringify(events)
+                });
+            } catch (error) {
+                console.error('Erreur lors de la sauvegarde distante :', error);
+            }
         }
 
         function filterAndRender() {
             const typeFilter = document.getElementById('typeFilter').value;
             const orgFilter = document.getElementById('orgFilter').value;
             
-            // Afficher UNIQUEMENT les événements futurs (à partir d'aujourd'hui 30-09-2026)
             let filtered = events.filter(e => {
                 const eDate = parseLocalDate(e.date);
                 eDate.setHours(0, 0, 0, 0);
@@ -382,7 +394,7 @@
                 const event = events.find(e => e.id === id);
                 if (!event.attendees.includes(name.trim())) {
                     event.attendees.push(name.trim());
-                    localStorage.setItem('events', JSON.stringify(events));
+                    saveToCloud();
                     filterAndRender();
                     alert(`✓ ${name} inscrit à "${event.title}"`);
                 }
@@ -392,7 +404,7 @@
         function removeAttendee(id, idx) {
             const event = events.find(e => e.id === id);
             event.attendees.splice(idx, 1);
-            localStorage.setItem('events', JSON.stringify(events));
+            saveToCloud();
             filterAndRender();
         }
 
@@ -442,7 +454,7 @@
                 events.push(data);
             }
 
-            localStorage.setItem('events', JSON.stringify(events));
+            saveToCloud();
             filterAndRender();
             closeModal();
         }
@@ -450,7 +462,7 @@
         function deleteEvent(id) {
             if (confirm('Supprimer cet événement ?')) {
                 events = events.filter(e => e.id !== id);
-                localStorage.setItem('events', JSON.stringify(events));
+                saveToCloud();
                 filterAndRender();
             }
         }
@@ -466,12 +478,8 @@
         }
 
         function refreshEvents() {
-            const message = `🔄 Actualisation en cours...\n\nRecherche de nouveaux événements sur :\n• ABBL.lu\n• ALFI.lu\n• Paperjam.lu\n• Hubfinance.com\n\nLes événements trouvés seront ajoutés automatiquement.\n\nNote: Le scraping manuel périodique des sites est recommandé pour rester à jour.`;
-            alert(message);
-            
-            // Dans une vraie implémentation, cela appellerait une API backend
-            // Pour l'instant, affiche un message indiquant qu'une actualisation manuelle est nécessaire
-            console.log('Actualisation demandée - Scraping des sites ABBL, ALFI, Paperjam, Hubfinance...');
+            loadEvents();
+            alert('🔄 Données actualisées depuis le cloud !');
         }
 
         loadEvents();
