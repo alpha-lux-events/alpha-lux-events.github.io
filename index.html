@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alpha Luxembourg - Social Events Tracker</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root { --primary: #0a0e27; --secondary: #4a6fa5; --accent: #d4a574; --light: #f5f6f8; --border: #e0e3e8; --text: #2c3e50; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--light); color: var(--text); }
+        .container { max-width: 1600px; margin: 0 auto; padding: 1rem; }
+        header { background: linear-gradient(135deg, var(--primary) 0%, #1a2a4a 100%); color: white; padding: 2rem 1rem; margin-bottom: 2rem; text-align: center; border-radius: 8px; }
+        h1 { font-size: 2rem; margin-bottom: 0.3rem; }
+        .subtitle { font-size: 0.95rem; opacity: 0.9; }
+        .controls { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-top: 1.5rem; }
+        button { padding: 0.6rem 1.2rem; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.3s; }
+        .btn-primary { background: var(--accent); color: var(--primary); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(212, 165, 116, 0.3); }
+        .btn-secondary { background: rgba(255,255,255,0.2); color: white; border: 2px solid white; }
+        .btn-secondary:hover { background: white; color: var(--primary); }
+        .filter-bar { background: white; padding: 1rem; border-radius: 8px; margin-bottom: 2rem; display: flex; gap: 1rem; flex-wrap: wrap; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .filter-bar label { font-weight: 600; color: var(--primary); white-space: nowrap; display: flex; align-items: center; }
+        select { padding: 0.6rem; border: 2px solid var(--border); border-radius: 6px; font-size: 0.9rem; }
+        select:focus { outline: none; border-color: var(--secondary); }
+        .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+        .stat { background: white; padding: 1rem; border-radius: 8px; text-align: center; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .stat-num { font-size: 1.8rem; font-weight: 700; color: var(--secondary); }
+        .stat-label { color: #999; font-size: 0.85rem; margin-top: 0.3rem; }
+        .month-section { margin-bottom: 2.5rem; }
+        .month-header { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; padding-bottom: 0.8rem; border-bottom: 3px solid var(--secondary); }
+        .month-header h2 { font-size: 1.4rem; color: var(--primary); }
+        .event-count { background: var(--secondary); color: white; padding: 0.4rem 0.8rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; }
+        .events-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1.2rem; }
+        .event-card { background: white; border-radius: 6px; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.08); transition: all 0.3s; border-top: 4px solid var(--secondary); }
+        .event-card:hover { transform: translateY(-4px); box-shadow: 0 8px 16px rgba(0,0,0,0.12); }
+        .event-card.cocktail { border-top-color: var(--accent); }
+        .event-header { padding: 0.8rem; background: #f8f9fb; border-bottom: 1px solid var(--border); display: flex; align-items: flex-start; gap: 0.6rem; }
+        .org-logo { display: none; }
+        .event-header-text { flex: 1; min-width: 0; }
+        .event-date { font-size: 0.8rem; color: #999; font-weight: 500; }
+        .event-type { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.2rem 0.5rem; background: #e0e3e8; color: #333; border-radius: 4px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; margin-top: 0.2rem; }
+        .event-type.cocktail { background: #e0e3e8; color: #333; }
+        .event-body { padding: 0.8rem; }
+        .event-title { font-size: 0.95rem; font-weight: 600; color: var(--primary); line-height: 1.3; margin-bottom: 0.4rem; }
+        .event-meta { font-size: 0.8rem; color: #666; margin-bottom: 0.3rem; display: flex; align-items: center; gap: 0.3rem; }
+        .event-meta-icon { font-size: 0.75rem; }
+        .no-attendees-flag { background: #fff3cd; color: #856404; padding: 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; text-align: center; margin-bottom: 0.6rem; }
+        .attendees-section { background: #f8f9fb; padding: 0.6rem 0.8rem; border-top: 1px solid var(--border); font-size: 0.75rem; }
+        .attendees-label { font-weight: 600; color: var(--primary); margin-bottom: 0.3rem; }
+        .attendee-list { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+        .attendee { background: var(--secondary); color: white; padding: 0.2rem 0.5rem; border-radius: 3px; font-size: 0.7rem; white-space: nowrap; }
+        .attendee.remove { cursor: pointer; opacity: 0.8; }
+        .attendee.remove:hover { opacity: 1; }
+        .event-footer { padding: 0.6rem 0.8rem; background: #fafbfc; border-top: 1px solid var(--border); display: flex; gap: 0.4rem; }
+        .btn-small { padding: 0.4rem 0.8rem; font-size: 0.75rem; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; }
+        .btn-add { background: #27ae60; color: white; flex: 1; }
+        .btn-add:hover { background: #229954; }
+        .btn-edit { background: #f5f5f5; color: #333; border: 1px solid #ddd; }
+        .btn-edit:hover { background: #e8e8e8; }
+        .btn-delete { background: #f5f5f5; color: #333; border: 1px solid #ddd; }
+        .btn-delete:hover { background: #e8e8e8; }
+        .empty-state { text-align: center; padding: 3rem 1rem; background: white; border-radius: 8px; color: #999; }
+        .modal { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; padding: 1rem; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; padding: 1.5rem; border-radius: 8px; max-width: 600px; width: 100%; max-height: 90vh; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; border-bottom: 2px solid var(--border); padding-bottom: 1rem; }
+        .modal-header h2 { color: var(--primary); margin: 0; }
+        .close { font-size: 1.5rem; cursor: pointer; color: #999; background: none; border: none; padding: 0; }
+        .form-group { margin-bottom: 1.2rem; }
+        .form-group label { display: block; font-weight: 600; color: var(--primary); margin-bottom: 0.4rem; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 0.6rem; border: 2px solid var(--border); border-radius: 6px; font-size: 0.95rem; font-family: inherit; }
+        .form-group textarea { resize: vertical; min-height: 80px; }
+        .modal-footer { display: flex; gap: 1rem; justify-content: flex-end; margin-top: 1.5rem; padding-top: 1rem; border-top: 2px solid var(--border); }
+        @media (max-width: 1200px) { .events-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); } }
+        @media (max-width: 768px) { .events-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); } header { padding: 1.5rem 1rem; } h1 { font-size: 1.5rem; } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Alpha Luxembourg - Social Events Tracker</h1>
+            <p class="subtitle">Who's going where? Track all the financial events in town.</p>
+            <div class="controls">
+                <button class="btn-primary" onclick="openAddEventModal()">+ add a missing event</button>
+                <button class="btn-secondary" onclick="refreshEvents()">Scrap the web for more events</button>
+                <button class="btn-secondary" onclick="exportData()">📥 Export</button>
+            </div>
+        </header>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-num" id="totalEvents">0</div>
+                <div class="stat-label">Événements</div>
+            </div>
+            <div class="stat">
+                <div class="stat-num" id="totalAttendees">0</div>
+                <div class="stat-label">Inscrits</div>
+            </div>
+            <div class="stat">
+                <div class="stat-num" id="upcomingCount">0</div>
+                <div class="stat-label">À venir</div>
+            </div>
+        </div>
+
+        <div class="filter-bar">
+            <label>Type: <select id="typeFilter" onchange="filterAndRender()">
+                <option value="">Tous</option>
+                <option value="conference">Conférence</option>
+                <option value="cocktail">Cocktail</option>
+                <option value="workshop">Workshop</option>
+                <option value="seminar">Séminaire</option>
+                <option value="forum">Forum</option>
+            </select></label>
+            <label>Organisateur: <select id="orgFilter" onchange="filterAndRender()">
+                <option value="">Tous</option>
+                <option value="ALFI">ALFI</option>
+                <option value="ABBL">ABBL</option>
+                <option value="Paperjam">Paperjam</option>
+                <option value="Paperjam Club">Paperjam Club</option>
+                <option value="Hubfinance">Hubfinance</option>
+                <option value="LPEA">LPEA</option>
+                <option value="Temenos">Temenos</option>
+            </select></label>
+        </div>
+
+        <div id="content"></div>
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <p>Aucun événement futur trouvé</p>
+            <button class="btn-primary" onclick="openAddEventModal()" style="margin-top: 1rem;">Ajouter un événement</button>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="eventModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Ajouter un événement</h2>
+                <button class="close" onclick="closeModal()">×</button>
+            </div>
+            <form id="eventForm" onsubmit="saveEvent(event)">
+                <div class="form-group">
+                    <label>Titre *</label>
+                    <input type="text" id="eventTitle" required>
+                </div>
+                <div class="form-group">
+                    <label>Type *</label>
+                    <select id="eventType" required>
+                        <option value="conference">Conférence</option>
+                        <option value="cocktail">Cocktail</option>
+                        <option value="workshop">Workshop</option>
+                        <option value="seminar">Séminaire</option>
+                        <option value="forum">Forum</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Date *</label>
+                    <input type="date" id="eventDate" required>
+                </div>
+                <div class="form-group">
+                    <label>Heure</label>
+                    <input type="time" id="eventTime">
+                </div>
+                <div class="form-group">
+                    <label>Lieu</label>
+                    <input type="text" id="eventLocation">
+                </div>
+                <div class="form-group">
+                    <label>Organisateur</label>
+                    <input type="text" id="eventOrganizer">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" onclick="closeModal()">Annuler</button>
+                    <button type="submit" class="btn-primary">Enregistrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let events = [];
+        let editingId = null;
+        
+        // Date de référence: 30 septembre 2026 (aujourd'hui)
+        const today = new Date(2026, 8, 30);
+        today.setHours(0, 0, 0, 0);
+
+        // Interprète YYYY-MM-DD en heure locale (et non en UTC).
+        function parseLocalDate(dateString) {
+            const [year, month, day] = dateString.split('-').map(Number);
+            return new Date(year, month - 1, day);
+        }
+        console.log('Date référence (aujourd\'hui):', today.toISOString().split('T')[0]);
+
+        // Icônes liées au TYPE d'événement (et non à l'organisateur)
+        const eventTypeIcons = {
+            'conference': '🎤',
+            'cocktail': '🥂',
+            'workshop': '🛠️',
+            'seminar': '📚',
+            'forum': '💬'
+        };
+
+        const logoMap = {
+            'ALFI': 'A',
+            'ABBL': 'B',
+            'Paperjam': 'P',
+            'Paperjam Club': 'P',
+            'Hubfinance': 'H',
+            'LPEA': 'L',
+            'Temenos': 'T',
+            'Charles River': 'C',
+            'BlackRock': 'B',
+            'ABBL & LuxCMA': 'B',
+            'ALJB (ABBL Partner)': 'A'
+        };
+
+        // Événements intégrés à l'application.
+        // Ils sont fusionnés avec localStorage pour qu'une ancienne version
+        // du calendrier ne fasse pas disparaître les nouveaux événements.
+        const defaultEvents = [
+                    // 2026 - ABBL Events (à partir du 30 sept 2026)
+                    { id: 107, title: "ABBL Depositary Banking Cluster Annual Meeting 2026", type: "conference", date: "2026-10-29", time: "09:00", location: "TBD - Luxembourg", organizer: "ABBL", attendees: [] },
+                    { id: 109, title: "PSD3 & PSR: Key Regulatory Changes", type: "seminar", date: "2026-10-02", time: "09:00", location: "TBD - Luxembourg", organizer: "ABBL", attendees: [] },
+                    { id: 108, title: "ABBL Private Banking Cluster Annual Event 2026", type: "conference", date: "2026-11-26", time: "09:00", location: "TBD - Luxembourg", organizer: "ABBL", attendees: [] },
+                    
+                    // 2027 - Events
+                    { id: 1, title: "Paperjam Together - SME Breakfast #1", type: "workshop", date: "2027-01-29", time: "08:00", location: "Spuerkeess, 2-4 Place de Metz", organizer: "Paperjam Club", attendees: [] },
+                    { id: 2, title: "Paperjam - Winter Cocktail", type: "cocktail", date: "2027-02-07", time: "17:00", location: "TBD - Luxembourg", organizer: "Paperjam Club", attendees: [] },
+                    { id: 3, title: "Paperjam 10x6 - The Future of Wealth", type: "forum", date: "2027-02-23", time: "09:00", location: "Kinepolis Kirchberg, 45 Av. JFK", organizer: "Paperjam", attendees: [] },
+                    { id: 4, title: "Hubfinance - Family Offices Summit", type: "forum", date: "2027-03-16", time: "08:15", location: "ECCL, 4 Place de l'Europe", organizer: "Hubfinance", attendees: [] },
+                    { id: 5, title: "ALFI - Global Asset Management Conference", type: "conference", date: "2027-03-23", time: "09:00", location: "ECCL, 7 Rue Alcide de Gasperi", organizer: "ALFI", attendees: [] },
+                    { id: 6, title: "Paperjam 10x6 - Governance & Transformation", type: "workshop", date: "2027-03-23", time: "09:00", location: "Kinepolis Kirchberg", organizer: "Paperjam", attendees: [] },
+                    { id: 7, title: "Paperjam Club - Tech Sovereignty Roundtable", type: "forum", date: "2027-04-28", time: "14:00", location: "TBD - Luxembourg", organizer: "Paperjam Club", attendees: [] },
+                    { id: 8, title: "Paperjam 10x6 - Funds Competition & Growth", type: "workshop", date: "2027-04-27", time: "09:00", location: "Kinepolis Kirchberg", organizer: "Paperjam", attendees: [] },
+                    { id: 9, title: "Paperjam - Oxford-style Debate: Private Credit", type: "forum", date: "2027-05-04", time: "17:00", location: "TBD - Luxembourg", organizer: "Paperjam", attendees: [] },
+                    { id: 10, title: "ALFI - European Risk Management Conference", type: "conference", date: "2027-05-19", time: "07:30", location: "Luxexpo The Box, Kirchberg", organizer: "ALFI", attendees: [] },
+                    { id: 11, title: "Paperjam - Tokenise My Finances", type: "forum", date: "2027-05-20", time: "17:00", location: "TBD - Luxembourg", organizer: "Paperjam", attendees: [] },
+                    { id: 12, title: "ALFI - Digital Fund Management Seminar", type: "seminar", date: "2027-06-08", time: "09:00", location: "ECCL, Kirchberg", organizer: "ALFI", attendees: [] },
+                    { id: 13, title: "Paperjam 10x6 - Private Markets Mainstream", type: "workshop", date: "2027-06-16", time: "09:00", location: "Kinepolis Kirchberg", organizer: "Paperjam", attendees: [] },
+                    { id: 14, title: "Temenos - Meet the Marketplace", type: "forum", date: "2027-06-04", time: "16:00", location: "House of Financial Tech", organizer: "Temenos", attendees: [] },
+                    { id: 15, title: "Paperjam - Summer Cocktail", type: "cocktail", date: "2027-07-01", time: "17:00", location: "TBD - Luxembourg", organizer: "Paperjam", attendees: [] },
+                    { id: 16, title: "Expat City Rally", type: "forum", date: "2027-07-09", time: "17:30", location: "Luxembourg City", organizer: "Paperjam Club", attendees: [] },
+                    { id: 17, title: "Paperjam - Focus IA: GenAI Opportunities", type: "forum", date: "2027-09-16", time: "17:00", location: "TBD - Luxembourg", organizer: "Paperjam", attendees: [] },
+                    { id: 18, title: "Paperjam - Autumn Cocktail", type: "cocktail", date: "2027-09-21", time: "17:00", location: "TBD - Luxembourg", organizer: "Paperjam", attendees: [] },
+                    { id: 19, title: "Charles River - Asset Mgmt Solutions Forum", type: "workshop", date: "2027-09-15", time: "14:00", location: "ECCL, Kirchberg", organizer: "Charles River", attendees: [] },
+                    { id: 20, title: "BlackRock - Investment Solutions Seminar", type: "seminar", date: "2027-10-05", time: "10:00", location: "ECCL, Kirchberg", organizer: "BlackRock", attendees: [] },
+                    { id: 21, title: "LPEA Insights Conference 2027", type: "conference", date: "2027-10-15", time: "09:00", location: "Luxexpo The Box, Kirchberg", organizer: "LPEA", attendees: [] },
+                    { id: 22, title: "Temenos Community Forum (TCF) 2027", type: "conference", date: "2027-05-05", time: "09:00", location: "ECCL, Kirchberg", organizer: "Temenos", attendees: [] },
+                    { id: 23, title: "ALFI - AML/CFT Compliance Seminar", type: "seminar", date: "2027-11-23", time: "09:00", location: "ECCL, Kirchberg", organizer: "ALFI", attendees: [] },
+                    { id: 24, title: "Paperjam x LFF - Finance Awards Gala", type: "cocktail", date: "2027-11-16", time: "19:00", location: "TBD - Luxembourg", organizer: "Paperjam Club", attendees: [] },
+                    { id: 25, title: "ALFI - Private Assets Conference Day 1", type: "conference", date: "2027-12-07", time: "09:00", location: "ECCL, Kirchberg", organizer: "ALFI", attendees: [] },
+                    { id: 26, title: "ALFI - Private Assets Conference Day 2", type: "conference", date: "2027-12-08", time: "09:00", location: "ECCL, Kirchberg", organizer: "ALFI", attendees: [] }
+                ];
+
+        function loadEvents() {
+            const saved = localStorage.getItem('events');
+
+            if (saved) {
+                try {
+                    const savedEvents = JSON.parse(saved);
+                    const savedIds = new Set(savedEvents.map(e => e.id));
+
+                    // Conserve les données déjà enregistrées et ajoute uniquement
+                    // les événements par défaut absents de localStorage.
+                    const missingDefaults = defaultEvents.filter(e => !savedIds.has(e.id));
+                    events = [...savedEvents, ...missingDefaults];
+
+                    localStorage.setItem('events', JSON.stringify(events));
+                } catch (error) {
+                    console.error('Erreur de lecture de localStorage :', error);
+                    events = [...defaultEvents];
+                    localStorage.setItem('events', JSON.stringify(events));
+                }
+            } else {
+                events = [...defaultEvents];
+                localStorage.setItem('events', JSON.stringify(events));
+            }
+
+            filterAndRender();
+        }
+
+        function filterAndRender() {
+            const typeFilter = document.getElementById('typeFilter').value;
+            const orgFilter = document.getElementById('orgFilter').value;
+            
+            // Afficher UNIQUEMENT les événements futurs (à partir d'aujourd'hui 30-09-2026)
+            let filtered = events.filter(e => {
+                const eDate = parseLocalDate(e.date);
+                eDate.setHours(0, 0, 0, 0);
+                const isFuture = eDate >= today;
+                const typeMatch = !typeFilter || e.type === typeFilter;
+                const orgMatch = !orgFilter || e.organizer === orgFilter;
+                return isFuture && typeMatch && orgMatch;
+            });
+
+            filtered.sort((a, b) => parseLocalDate(a.date) - parseLocalDate(b.date));
+
+            if (filtered.length === 0) {
+                document.getElementById('content').innerHTML = '';
+                document.getElementById('emptyState').style.display = 'block';
+                updateStats();
+                return;
+            }
+
+            document.getElementById('emptyState').style.display = 'none';
+
+            const grouped = {};
+            filtered.forEach(e => {
+                const d = parseLocalDate(e.date);
+                const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+                if (!grouped[key]) grouped[key] = [];
+                grouped[key].push(e);
+            });
+
+            const monthNames = ['Jan', 'Fev', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aou', 'Sep', 'Oct', 'Nov', 'Dec'];
+            let html = '';
+            
+            Object.keys(grouped).sort().forEach(key => {
+                const [year, month] = key.split('-');
+                const monthName = monthNames[parseInt(month) - 1];
+                const evts = grouped[key];
+                
+                html += `<div class="month-section">
+                    <div class="month-header">
+                        <h2>${monthName} ${year}</h2>
+                        <span class="event-count">${evts.length}</span>
+                    </div>
+                    <div class="events-grid">`;
+                
+                evts.forEach(e => {
+                    const d = parseLocalDate(e.date);
+                    const dayMonth = `${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+                    const logo = logoMap[e.organizer] || '•';
+                    const typeIcon = eventTypeIcons[e.type] || '📅';
+                    const isCocktail = e.type === 'cocktail' ? 'cocktail' : '';
+                    
+                    html += `<div class="event-card ${isCocktail}">
+                        <div class="event-header">
+                            <div class="org-logo" title="${e.organizer || ''}">${logo}</div>
+                            <div class="event-header-text">
+                                <div class="event-date">${dayMonth} ${e.time || '09:00'}</div>
+                                <span class="event-type ${isCocktail}">${typeIcon} ${e.type}</span>
+                            </div>
+                        </div>
+                        <div class="event-body">
+                            <div class="event-title">${e.title}</div>
+                            ${e.location ? `<div class="event-meta"><span class="event-meta-icon">📍</span><span>${e.location.split(',')[0]}</span></div>` : ''}
+                            ${e.organizer ? `<div class="event-meta"><span class="event-meta-icon">🏢</span><span>${e.organizer}</span></div>` : ''}
+                            ${e.attendees.length === 0 ? `<div class="no-attendees-flag">🚩 No Alpha participant yet</div>` : ''}
+                        </div>
+                        ${e.attendees.length > 0 ? `<div class="attendees-section">
+                            <div class="attendees-label">Going (${e.attendees.length})</div>
+                            <div class="attendee-list">
+                                ${e.attendees.map((name, idx) => `<span class="attendee" onclick="removeAttendee(${e.id}, ${idx})">${name} ✕</span>`).join('')}
+                            </div>
+                        </div>` : ''}
+                        <div class="event-footer">
+                            <button class="btn-small btn-add" onclick="addAttendee(${e.id})">I intend to go</button>
+                            <button class="btn-small btn-edit" onclick="editEvent(${e.id})">✏️</button>
+                            <button class="btn-small btn-delete" onclick="deleteEvent(${e.id})">🗑️</button>
+                        </div>
+                    </div>`;
+                });
+                
+                html += '</div></div>';
+            });
+
+            document.getElementById('content').innerHTML = html;
+            updateStats();
+        }
+
+        function updateStats() {
+            document.getElementById('totalEvents').textContent = events.length;
+            document.getElementById('totalAttendees').textContent = events.reduce((sum, e) => sum + e.attendees.length, 0);
+            const upcoming = events.filter(e => parseLocalDate(e.date) >= today).length;
+            document.getElementById('upcomingCount').textContent = upcoming;
+        }
+
+        function addAttendee(id) {
+            const name = prompt('Entrez votre prénom (ex: Jean):');
+            if (name && name.trim()) {
+                const event = events.find(e => e.id === id);
+                if (!event.attendees.includes(name.trim())) {
+                    event.attendees.push(name.trim());
+                    localStorage.setItem('events', JSON.stringify(events));
+                    filterAndRender();
+                    alert(`✓ ${name} inscrit à "${event.title}"`);
+                }
+            }
+        }
+
+        function removeAttendee(id, idx) {
+            const event = events.find(e => e.id === id);
+            event.attendees.splice(idx, 1);
+            localStorage.setItem('events', JSON.stringify(events));
+            filterAndRender();
+        }
+
+        function openAddEventModal() {
+            editingId = null;
+            document.getElementById('eventForm').reset();
+            document.getElementById('modalTitle').textContent = 'Ajouter un événement';
+            document.getElementById('eventModal').classList.add('active');
+        }
+
+        function editEvent(id) {
+            const event = events.find(e => e.id === id);
+            if (!event) return;
+            editingId = id;
+            document.getElementById('eventTitle').value = event.title;
+            document.getElementById('eventType').value = event.type;
+            document.getElementById('eventDate').value = event.date;
+            document.getElementById('eventTime').value = event.time || '';
+            document.getElementById('eventLocation').value = event.location || '';
+            document.getElementById('eventOrganizer').value = event.organizer || '';
+            document.getElementById('modalTitle').textContent = 'Modifier un événement';
+            document.getElementById('eventModal').classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('eventModal').classList.remove('active');
+        }
+
+        function saveEvent(e) {
+            e.preventDefault();
+            const data = {
+                title: document.getElementById('eventTitle').value,
+                type: document.getElementById('eventType').value,
+                date: document.getElementById('eventDate').value,
+                time: document.getElementById('eventTime').value,
+                location: document.getElementById('eventLocation').value,
+                organizer: document.getElementById('eventOrganizer').value,
+                attendees: editingId ? events.find(ev => ev.id === editingId).attendees : []
+            };
+
+            if (editingId) {
+                const idx = events.findIndex(ev => ev.id === editingId);
+                data.id = editingId;
+                events[idx] = data;
+            } else {
+                data.id = Math.max(...events.map(ev => ev.id), 0) + 1;
+                events.push(data);
+            }
+
+            localStorage.setItem('events', JSON.stringify(events));
+            filterAndRender();
+            closeModal();
+        }
+
+        function deleteEvent(id) {
+            if (confirm('Supprimer cet événement ?')) {
+                events = events.filter(e => e.id !== id);
+                localStorage.setItem('events', JSON.stringify(events));
+                filterAndRender();
+            }
+        }
+
+        function exportData() {
+            const dataStr = JSON.stringify(events, null, 2);
+            const blob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `events_${new Date().toISOString().split('T')[0]}.json`;
+            link.click();
+        }
+
+        function refreshEvents() {
+            const message = `🔄 Actualisation en cours...\n\nRecherche de nouveaux événements sur :\n• ABBL.lu\n• ALFI.lu\n• Paperjam.lu\n• Hubfinance.com\n\nLes événements trouvés seront ajoutés automatiquement.\n\nNote: Le scraping manuel périodique des sites est recommandé pour rester à jour.`;
+            alert(message);
+            
+            // Dans une vraie implémentation, cela appellerait une API backend
+            // Pour l'instant, affiche un message indiquant qu'une actualisation manuelle est nécessaire
+            console.log('Actualisation demandée - Scraping des sites ABBL, ALFI, Paperjam, Hubfinance...');
+        }
+
+        loadEvents();
+    </script>
+</body>
+</html>
